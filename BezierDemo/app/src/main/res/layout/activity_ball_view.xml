@@ -11,6 +11,97 @@
         android:layout_weight="1" />
 
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:text="指示点半径:" />
+
+        <SeekBar
+            android:id="@+id/sbar_radius"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:max="50" />
+
+        <TextView
+            android:id="@+id/tv_radius"
+            android:layout_width="50dp"
+            android:gravity="right"
+            android:layout_height="wrap_content"
+            android:text="0dp" />
+
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:text="指示点数量:" />
+
+        <SeekBar
+            android:id="@+id/sbar_number"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:max="8" />
+
+        <TextView
+            android:id="@+id/tv_number"
+            android:layout_width="50dp"
+            android:gravity="right"
+            android:layout_height="wrap_content"
+            android:text="0" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:text="指示点间隔:" />
+
+        <SeekBar
+            android:id="@+id/sbar_margin"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:max="50" />
+
+        <TextView
+            android:id="@+id/tv_margin"
+            android:layout_width="50dp"
+            android:gravity="right"
+            android:layout_height="wrap_content"
+            android:text="0 * 半径" />
+
+    </LinearLayout>
+
     <Button
         android:id="@+id/bt_change_position"
         android:layout_width="match_parent"

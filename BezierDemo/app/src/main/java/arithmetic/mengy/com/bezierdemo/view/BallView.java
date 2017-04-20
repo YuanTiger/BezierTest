@@ -54,13 +54,15 @@ public class BallView extends View {
     private Paint ballBgPaint;//背景画笔
     private Path ballBgPath;//背景Path
 
-    private static final int MOVE_DISTANCE = 100;//移动距离比
+    private long animotionTime = 800;//动画持续时间
 
-    private int ballRadius = ScreenUtils.dp2Px(20);//半径
+    private int ballRadius = ScreenUtils.dp2Px(15);//半径
 
-    private int length = 4;//条目数量
+    private int length = 5;//条目数量
 
-    private int ballMargin = 2;//知识点的间距，为半径的倍数，最小为2r
+    private float ballMargin = 0.5f;//指示点的间距，为半径的倍数，最小为0r
+
+    private float ARRIVATE_OVER_TIME = 2.5f;//球到达目的地的时间， 最大为3f，最小为2f
 
 
     public BallView(Context context) {
@@ -86,7 +88,6 @@ public class BallView extends View {
 
         initPath();
 
-        startRightAnimotion(3);
     }
 
 
@@ -107,8 +108,9 @@ public class BallView extends View {
      * 初始化形状
      */
     private void initPath() {
-
-
+        if (ballMargin < 0f) {
+            ballMargin = 0f;
+        }
         ballBgPath = new Path();
         for (int i = 0; i < length; i++) {
             ballBgPath.addCircle((ballMargin + 2) * i * ballRadius + ballRadius, ballRadius, ballRadius, Path.Direction.CW);
@@ -134,14 +136,13 @@ public class BallView extends View {
         //切换的下标数量
         final int changePositionNumber = positin - currentPosition;
 
-        rightAnimator = ValueAnimator.ofFloat(currentFloat, 3f).setDuration(1000);
+        rightAnimator = ValueAnimator.ofFloat(currentFloat, 3f).setDuration(animotionTime);
         rightAnimator.setInterpolator(new LinearInterpolator());
         rightAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 currentFloat = (float) animation.getAnimatedValue();
                 //平移的距离
-                moveInstance = currentXinstance + (ballMargin + 2) * ballRadius * (currentFloat / 3 * changePositionNumber);
 
                 if (currentFloat <= 1) {
                     Log.i("my", "阶段111111");
@@ -157,18 +158,57 @@ public class BallView extends View {
                     rightChangeRadius = (ballRadius - (currentFloat - 1) * (ballRadius * 0.5f)) * changePositionNumber;
                     //左边增加r
                     leftChangeRadius = (ballRadius * (currentFloat - 1)) * changePositionNumber;
-                    //Y上下最大各压缩1/8
-                    yChangeInstance = ballRadius / 8 * (currentFloat - 1) * changePositionNumber;
+                    //Y上下最大各压缩1/6
+                    if (changePositionNumber > 3) {
+                        yChangeInstance = ballRadius / 6 * (currentFloat - 1) * 3;
+                    } else {
+                        yChangeInstance = ballRadius / 6 * (currentFloat - 1) * changePositionNumber;
+                    }
 
                 } else {
                     Log.i("my", "阶段33333333333333");
-                    rightChangeRadius = (3 - currentFloat) * (ballRadius * 0.5f) * changePositionNumber;
-                    leftChangeRadius = (3 - currentFloat) * ballRadius * changePositionNumber;
 
-                    yChangeInstance = (3 - currentFloat) * ballRadius / 8 * changePositionNumber;
+                    if (currentFloat > ARRIVATE_OVER_TIME) {
+                        //在该阶段，右边 与Y轴 是不变的，因为动画的动态值是随机的，而且与手机性能有关，可能2个动画的间隔会很大，导致图形未变回原形
+                        // 这里保证图形变回原形
+                        rightChangeRadius = 0;
+                        yChangeInstance = 0;
+                        //回弹效果
+                        //回弹时间,除以二是  一半时间是收缩，另一半时间是回放
+                        float reboundTime = (3f - ARRIVATE_OVER_TIME) / 2f;
+                        //前半段，收缩
+                        if (currentFloat < ARRIVATE_OVER_TIME + reboundTime) {
+                            leftChangeRadius = -(currentFloat - ARRIVATE_OVER_TIME) * ballRadius * 1.5f;
+                        } else {
+                            leftChangeRadius = -(3f - currentFloat) * ballRadius * 1.5f;
+                        }
+                    } else {
+                        //变回原形
+                        rightChangeRadius = 0.5f * ballRadius * changePositionNumber - (currentFloat - 2f) / (ARRIVATE_OVER_TIME - 2f) * (ballRadius * 0.5f) * changePositionNumber;
+                        leftChangeRadius = ballRadius * changePositionNumber - (currentFloat - 2f) / (ARRIVATE_OVER_TIME - 2f) * ballRadius * changePositionNumber;
+
+                        if (changePositionNumber > 3) {
+                            yChangeInstance = ballRadius / 6 * changePositionNumber - (currentFloat - 2f) / (ARRIVATE_OVER_TIME - 2f) * ballRadius / 6 * 3;
+
+                        } else {
+                            yChangeInstance = ballRadius / 6 * changePositionNumber - (currentFloat - 2f) / (ARRIVATE_OVER_TIME - 2f) * ballRadius / 6 * changePositionNumber;
+                        }
+                    }
+
+                }
+
+
+                if (currentFloat >= 1) {
+                    float currentProgress = (currentFloat - 1f) / (ARRIVATE_OVER_TIME - 1f);
+                    if (currentProgress > 1) {
+                        currentProgress = 1;
+                    }
+                    moveInstance = currentXinstance + (ballMargin + 2f) * ballRadius * currentProgress * changePositionNumber;
                 }
                 Log.i("my", "ballRadius:" + ballRadius);
                 Log.i("my", "currentFloat:" + currentFloat);
+                Log.i("my", "changePositionNumber:" + changePositionNumber);
+                Log.i("my", "currentXinstance:" + currentXinstance);
                 Log.i("my", "moveInstance:" + moveInstance);
                 Log.i("my", "rightChangeRadius:" + rightChangeRadius);
                 Log.i("my", "leftChangeRadius:" + leftChangeRadius);
@@ -225,14 +265,12 @@ public class BallView extends View {
 
 
         //切换的下标数量
-        leftAmimator = ValueAnimator.ofFloat(currentFloat, 3).setDuration(1500);
+        leftAmimator = ValueAnimator.ofFloat(currentFloat, 3).setDuration(animotionTime);
         leftAmimator.setInterpolator(new LinearInterpolator());
         leftAmimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
                 currentFloat = (float) animation.getAnimatedValue();
-                //平移的距离
-                moveInstance = currentXinstance - (ballMargin + 2) * ballRadius * (currentFloat / 3 * changePositionNumber);
 
                 if (currentFloat <= 1) {
                     Log.i("my", "阶段111111");
@@ -249,16 +287,47 @@ public class BallView extends View {
                     rightChangeRadius = ballRadius * (currentFloat - 1) * changePositionNumber;
                     //左边减少 changePosition* 0.5r
                     leftChangeRadius = (ballRadius - (currentFloat - 1) * (ballRadius * 0.5f)) * changePositionNumber;
-                    //Y上下最大各压缩1/8
-                    yChangeInstance = ballRadius / 8 * (currentFloat - 1) * changePositionNumber;
+                    //Y上下最大各压缩1/7*切换数量
+                    if (changePositionNumber > 3) {
+                        yChangeInstance = ballRadius / 6 * (currentFloat - 1) * 3;
+                    } else {
+                        yChangeInstance = ballRadius / 6 * (currentFloat - 1) * changePositionNumber;
+                    }
                 } else {
                     Log.i("my", "阶段33333333333333");
-                    //变回原形
-                    rightChangeRadius = (3 - currentFloat) * ballRadius * changePositionNumber;
-                    leftChangeRadius = (3 - currentFloat) * (ballRadius * 0.5f) * changePositionNumber;
+                    if (currentFloat > ARRIVATE_OVER_TIME) {
+                        //在该阶段，右边 与Y轴 是不变的，因为动画的动态值是随机的，而且与手机性能有关，可能2个动画的间隔会很大，导致图形未变回原形
+                        // 这里保证图形变回原形
+                        leftChangeRadius = 0;
+                        yChangeInstance = 0;
+                        //回弹效果
+                        //回弹时间,除以二是  一半时间是收缩，另一半时间是回放
+                        float reboundTime = (3f - ARRIVATE_OVER_TIME) / 2f;
+                        //前半段，收缩
+                        if (currentFloat < ARRIVATE_OVER_TIME + reboundTime) {
+                            rightChangeRadius = -(currentFloat - ARRIVATE_OVER_TIME) * ballRadius * 1.5f;
+                        } else {
+                            rightChangeRadius = -(3f - currentFloat) * ballRadius * 1.5f;
+                        }
+                    } else {
+                        //变回原形
+                        rightChangeRadius = ballRadius * changePositionNumber - (currentFloat - 2f) / (ARRIVATE_OVER_TIME - 2f) * ballRadius * changePositionNumber;
+                        leftChangeRadius = 0.5f * ballRadius * changePositionNumber - (currentFloat - 2f) / (ARRIVATE_OVER_TIME - 2f) * (ballRadius * 0.5f) * changePositionNumber;
+                        if (changePositionNumber > 3) {
+                            yChangeInstance = ballRadius / 6 * changePositionNumber - (currentFloat - 2f) / (ARRIVATE_OVER_TIME - 2f) * ballRadius / 6 * 3;
 
-                    yChangeInstance = (3 - currentFloat) * ballRadius / 8 * changePositionNumber;
-
+                        } else {
+                            yChangeInstance = ballRadius / 6 * changePositionNumber - (currentFloat - 2f) / (ARRIVATE_OVER_TIME - 2f) * ballRadius / 6 * changePositionNumber;
+                        }
+                    }
+                }
+                //位移距离计算
+                if (currentFloat >= 1) {
+                    float currentProgress = (currentFloat - 1f) / (ARRIVATE_OVER_TIME - 1f);
+                    if (currentProgress > 1) {
+                        currentProgress = 1;
+                    }
+                    moveInstance = currentXinstance - (ballMargin + 2f) * ballRadius * currentProgress * changePositionNumber;
                 }
                 Log.i("my", "ballRadius:" + ballRadius);
                 Log.i("my", "currentFloat:" + currentFloat);
@@ -379,5 +448,41 @@ public class BallView extends View {
 
     public void setCurrentPosition(int position) {
         startLeftAnimotion(position);
+    }
+
+    public void setRadius(int radius) {
+        ballRadius = ScreenUtils.dp2Px(radius);
+        reInitView();
+    }
+
+    public void setMargin(float margin) {
+        ballMargin = margin;
+        reInitView();
+    }
+
+    public void setLength(int length) {
+        this.length = length;
+        reInitView();
+
+    }
+
+    private void reInitView() {
+        currentXinstance = 0;
+        currentPosition = 0;
+        moveInstance = 0;
+        initView();
+        postInvalidate();
+    }
+
+    public int getRadius() {
+        return ballRadius;
+    }
+
+    public float getMargin() {
+        return ballMargin;
+    }
+
+    public int getLength() {
+        return length;
     }
 }
